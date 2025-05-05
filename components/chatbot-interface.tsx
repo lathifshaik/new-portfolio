@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Send, X } from "lucide-react"
 import GlassCard from "@/components/glass-card"
+import { generateChatResponse } from "@/lib/mistral-client"
 
 interface ChatbotInterfaceProps {
   onClose: () => void
@@ -48,39 +49,65 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
     setIsLoading(true)
 
     try {
-      // In a real implementation, you would use the AI SDK to generate a response
-      // For now, we'll simulate a response
+      // Format messages for Mistral AI
+      const messageHistory = messages
+        .filter((msg) => msg.role === "user" || msg.role === "assistant")
+        .map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
 
-      // This is a placeholder for the actual AI SDK implementation
-      // const { text } = await generateText({
-      //   model: openai("gpt-4o"),
-      //   prompt: `You are Abdul's AI clone. Respond to: ${input}`,
-      //   system: "You are an AI assistant that mimics Abdul's personality. You are friendly, professional, and knowledgeable about technology, especially AI and software development."
-      // })
+      // Add the new user message
+      messageHistory.push({
+        role: "user",
+        content: input,
+      });
 
-      // Simulating AI response for demo purposes
-      setTimeout(() => {
-        const aiResponse: Message = {
+      try {
+        // Try to generate a response using Mistral AI
+        const aiResponse = await generateChatResponse(messageHistory);
+        
+        // Ensure the response matches the Message type
+        const typedResponse: Message = {
           role: "assistant",
-          content: getSimulatedResponse(input),
-        }
-        setMessages((prev) => [...prev, aiResponse])
-        setIsLoading(false)
-      }, 1000)
+          content: typeof aiResponse.content === 'string' ? aiResponse.content : 'Sorry, I couldn\'t generate a proper response.'
+        };
+
+        setMessages((prev) => [...prev, typedResponse]);
+      } catch (apiError) {
+        console.error("Mistral API error:", apiError);
+        
+        // Use the fallback response system when the API fails
+        const fallbackContent = getFallbackResponse(input);
+        
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: fallbackContent,
+          },
+        ]);
+        
+        // Log that we used a fallback response
+        console.log("Used fallback response due to API error");
+      }
+      
+      setIsLoading(false);
     } catch (error) {
-      console.error("Error generating response:", error)
+      console.error("Error processing message:", error);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "Sorry, I'm having trouble connecting right now. Please try again later.",
+          content: "Sorry, I'm having trouble right now. Feel free to ask me something else!",
         },
-      ])
-      setIsLoading(false)
+      ]);
+      setIsLoading(false);
     }
   }
 
-  const getSimulatedResponse = (input: string) => {
+  // Fallback responses if Mistral AI is not available or errors out
+  const getFallbackResponse = (input: string) => {
     const lowerInput = input.toLowerCase()
 
     if (lowerInput.includes("hello") || lowerInput.includes("hi")) {
@@ -88,18 +115,22 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
     }
 
     if (lowerInput.includes("project") || lowerInput.includes("work")) {
-      return "I've worked on several exciting projects! My portfolio includes AI assistants, smart home applications, and finance tracking tools. Each project focuses on creating intuitive user experiences with cutting-edge technology."
+      return "I've worked on several exciting projects! My flagship project is Workzen, an AI recruitment platform. I've also built AI assistants, fitness tracking apps, and data analytics tools."
     }
 
     if (lowerInput.includes("skill") || lowerInput.includes("technology")) {
-      return "I specialize in JavaScript/TypeScript, React, Next.js, and Node.js for frontend and backend development. I'm also experienced with Python for machine learning projects and have a strong foundation in UI/UX design principles."
+      return "I specialize in Python, JavaScript, React, and various AI/ML technologies. I'm particularly experienced with LLMs, deep learning, and building full-stack applications."
     }
 
     if (lowerInput.includes("contact") || lowerInput.includes("hire")) {
-      return "I'd love to discuss potential collaborations! You can reach out through the contact form on this site, or if you prefer, send me a direct email. I typically respond within 24 hours."
+      return "You can reach me at lathifshaik@icloud.com or through my LinkedIn profile at linkedin.com/in/abdullathifsk. I'd love to discuss potential collaborations!"
     }
 
-    return "That's an interesting question! As Abdul's AI clone, I try to capture his approach to problem-solving and creativity. Is there something specific about my work or expertise you'd like to know more about?"
+    if (lowerInput.includes("poetry") || lowerInput.includes("poem")) {
+      return "I write poetry in both English and Urdu/Hindi. My poems often explore themes of existence, relationships, and personal identity. I find poetry to be a beautiful way to express emotions that are hard to capture otherwise."
+    }
+
+    return "That's an interesting question! As Abdul's AI clone, I try to capture his approach to problem-solving and creativity. Is there something specific about my work or interests you'd like to know more about?"
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
