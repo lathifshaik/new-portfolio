@@ -247,7 +247,7 @@ export default function ContactForm() {
                 required
               />
             </motion.div>
-            <motion.div className="flex justify-center md:justify-end" custom={1} variants={inputVariants} initial="hidden" animate={isInView ? "visible" : "hidden"}>
+            <motion.div custom={1} variants={inputVariants} initial="hidden" animate={isInView ? "visible" : "hidden"}>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
