@@ -15,19 +15,67 @@ interface Message {
   content: string
 }
 
-export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
+// Helper function to save messages to localStorage
+const saveMessagesToStorage = (msgs: Message[]) => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('chatHistory', JSON.stringify(msgs));
+    } catch (e) {
+      console.error('Failed to save messages to localStorage', e);
+    }
+  }
+};
+
+// Helper function to load messages from localStorage
+const loadMessagesFromStorage = (): Message[] => {
+  if (typeof window === 'undefined') {
+    return [{
       role: "assistant",
       content: "Hey I'm Abdul Lathif but you can call me Lathif. How can I help you today?",
-    },
-  ])
-  const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
-  const [showScrollButton, setShowScrollButton] = useState(false)
-  const chatContainerRef = useRef<HTMLDivElement>(null)
+    }];
+  }
+  
+  try {
+    const saved = localStorage.getItem('chatHistory');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Validate the parsed data matches our Message type
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load messages from localStorage', e);
+  }
+  
+  // Default message if nothing is saved or if there was an error
+  return [{
+    role: "assistant",
+    content: "Hey I'm Abdul Lathif but you can call me Lathif. How can I help you today?",
+  }];
+};
+
+export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
+  const [messages, setMessages] = useState<Message[]>(() => loadMessagesFromStorage());
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Handle closing the chat
+  const handleClose = () => {
+    // Save empty messages to clear history
+    const defaultMessage = {
+      role: "assistant" as const,
+      content: "Hey I'm Abdul Lathif but you can call me Lathif. How can I help you today?"
+    };
+    saveMessagesToStorage([defaultMessage]);
+    onClose();
+  };
 
   // Close on click outside
   useEffect(() => {
@@ -122,7 +170,9 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
     if (!input.trim() || isLoading) return
 
     const userMessage: Message = { role: "user", content: input }
-    setMessages((prev) => [...prev, userMessage])
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
+    saveMessagesToStorage(updatedMessages)
     setInput("")
     setIsLoading(true)
 
@@ -142,16 +192,18 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
         content: responseContent,
       }
 
-      setMessages((prev) => [...prev, assistantMessage])
+      const updatedWithAssistant = [...updatedMessages, assistantMessage]
+      setMessages(updatedWithAssistant)
+      saveMessagesToStorage(updatedWithAssistant)
     } catch (err) {
       console.error("API Error:", err)
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: getFallbackResponse(input),
-        },
-      ])
+      const fallbackMessage: Message = {
+        role: "assistant",
+        content: getFallbackResponse(input)
+      }
+      const updatedWithFallback = [...updatedMessages, fallbackMessage]
+      setMessages(updatedWithFallback)
+      saveMessagesToStorage(updatedWithFallback)
     } finally {
       setIsLoading(false)
     }
@@ -160,72 +212,40 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
   const getFallbackResponse = (input: string) => {
     const q = input.toLowerCase()
 
-    // Handle potentially sensitive topics with humor and redirection
+    // Handle romantic/relationship topics
+    if (q.includes('love') || q.includes('like you') || q.includes('crush')) {
+      return "I appreciate the sentiment, but I should clarify - I'm just an AI assistant here to help with professional and technical questions. Let's keep things focused on work and projects. What can I help you with today?"
+    }
+
+    // Handle potentially sensitive topics
     if (q.includes('kill') || q.includes('hurt') || q.includes('harm') || q.includes('violence')) {
-      return "Oh wow, that got dark fast! 😅 I'm just a friendly AI assistant here to talk about tech, projects, and occasionally share bad jokes. How about we discuss something more uplifting, like my latest project or favorite programming language?"
+      return "I'm not comfortable discussing that topic. I'm here to help with professional and technical questions. How can I assist you with your work or projects?"
     }
 
+    // Common questions
     if (q.includes("hello") || q.includes("hi")) {
-      return "Hey there! I'm Lathif's digital twin. What would you like to know?"
+      return "Hi there! I'm Lathif's AI assistant. How can I help you today?"
     }
+    
     if (q.includes("project") || q.includes("work")) {
-      return "I've worked on AI projects like Workzen, AI assistants, fitness trackers, and data tools."
+      return "I've worked on various projects including AI applications, web development, and data analysis. What would you like to know more about?"
     }
+    
     if (q.includes("skill") || q.includes("technology")) {
-      return "I specialize in Python, React, and LLMs — building full-stack and AI systems."
+      return "My expertise includes Python, JavaScript, React, and AI/ML technologies. I can help with full-stack development and AI integration."
     }
+    
     if (q.includes("contact") || q.includes("hire")) {
-      return "Reach me at abdullathifsk@icloud.com or on LinkedIn: https://www.linkedin.com/in/abdullathifsk/"
-    }
-    if (q.includes("poetry") || q.includes("poem")) {
-      return `**Stardust and Echoes**
-
-In the quiet of the night,
-Under the moon's soft glow,
-I find myself lost in thought,
-In the space between stars we know.
-
-Stars that whisper stories
-Of time and cosmic grace,
-Dreams that dance in moonlight,
-And echoes of a distant place.
-
-We're stardust, you and I,
-Bound by threads of cosmic lore,
-In this vast and endless sky,
-We search for answers evermore.
-
----
-
-**तारे और ख्वाब**
-
-रात की खामोशी में,
-तारों की चमक में,
-मैं खोया हुआ हूँ,
-सवालों के सागर में.
-
-तारे दूर, चमकदार,
-समय और अंतरिक्ष की कहानियाँ बताते हैं,
-ख्वाब जो चाँदनी में धुंधलाते हैं,
-और दूर के स्थानों की आवाजें.
-
-हम तारों का धूल हैं,
-ब्रह्मांड की कहानियों से जुड़े,
-इस अनंत आकाश में,
-हम हमेशा जवाब ढूँढ़ते हैं।`
+      return "For professional inquiries, you can reach out via email or LinkedIn. How can I assist you further?"
     }
 
-    // For other unexpected questions, respond with curiosity and redirection
-    if (q.includes('?') && (q.length > 20 || q.split(' ').length > 5)) {
-      const responses = [
-        "Hmm, that's an interesting thought! I'm more comfortable discussing tech, AI, or creative projects. What's your favorite technology to work with?",
-        "You've got me there! I'm better at talking about coding, AI, or my projects. Want to hear about what I've been working on?",
-        "*adjusts virtual glasses* That's quite the question! I'm more of a tech and AI enthusiast myself. Have you checked out any interesting tech trends lately?"
-      ]
-      return responses[Math.floor(Math.random() * responses.length)]
+    // For other questions, respond directly and professionally
+    if (q.includes('?')) {
+      return "That's an interesting question. I'm here to assist with technical and professional topics. Could you tell me more about what you're working on?"
     }
 
-    return "Interesting! Want to know more about my projects, skills, or thoughts? I can also share some terrible programming jokes if you're into that!"
+    // Default response for statements
+    return "Thanks for sharing. Is there something specific you'd like help with? I can assist with coding questions, project ideas, or technical discussions."
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -253,7 +273,7 @@ We search for answers evermore.
             </div>
           </div>
           <button 
-            onClick={onClose} 
+            onClick={handleClose} 
             className="text-gray-500 hover:text-gray-800 p-1 rounded-full hover:bg-gray-100 transition-colors"
             aria-label="Close chat">
             <X size={20} />
