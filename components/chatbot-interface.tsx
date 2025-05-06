@@ -167,7 +167,7 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
       return "I specialize in Python, React, and LLMs — building full-stack and AI systems."
     }
     if (q.includes("contact") || q.includes("hire")) {
-      return "Reach me at lathifshaik@icloud.com or on LinkedIn: https://www.linkedin.com/in/abdullathifsk/"
+      return "Reach me at abdullathifsk@icloud.com or on LinkedIn: https://www.linkedin.com/in/abdullathifsk/"
     }
     if (q.includes("poetry") || q.includes("poem")) {
       return `**Stardust and Echoes**

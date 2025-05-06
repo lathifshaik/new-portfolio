@@ -215,10 +215,10 @@ export default function Home() {
           transition={{ delay: 0.8, duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
           className="flex justify-center gap-6 mb-12"
         >
-          <ContactIconButton icon={Mail} label="Email" value="lathifshaik@icloud.com" delay={0} />
+          <ContactIconButton icon={Mail} label="Email" value="abdullathifsk@icloud.com" delay={0} />
           <ContactIconButton icon={Phone} label="Phone" value="+91 89194 04059" delay={0.1} />
-          <ContactIconButton icon={Github} label="GitHub" value="lathifshaik" delay={0.2} />
-          <ContactIconButton icon={Linkedin} label="LinkedIn" value="lathifshaik" delay={0.3} />
+          <ContactIconButton icon={Github} label="GitHub" value="abdullathifsk" delay={0.2} />
+          <ContactIconButton icon={Linkedin} label="LinkedIn" value="abdullathifsk" delay={0.3} />
         </motion.div>
 
         <motion.div
@@ -875,7 +875,7 @@ export default function Home() {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Email</p>
-                        <p className="font-medium">lathifshaik@icloud.com</p>
+                        <p className="font-medium">abdullathifsk@icloud.com</p>
                       </div>
                     </div>
                     
@@ -905,7 +905,7 @@ export default function Home() {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">GitHub</p>
-                        <a href="https://github.com/lathifshaik" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-black">github.com/lathifshaik</a>
+                        <a href="https://github.com/abdullathifsk" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-black">github.com/abdullathifsk</a>
                       </div>
                     </div>
                   </div>

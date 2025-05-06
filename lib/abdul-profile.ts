@@ -6,12 +6,12 @@
 export const personalProfile = {
   basics: {
     name: "Abdul Lathif Shaik",
-    email: "lathifshaik@icloud.com",
+    email: "abdullathifsk@icloud.com",
     phone: "+91 89194 04059",
     location: "Carlton, Victoria, Australia",
     linkedIn: "https://www.linkedin.com/in/abdullathifsk/",
     github: "abdullathifsk",
-    portfolio: "lathifshaik",
+    portfolio: "abdullathifsk",
     podcast: "https://open.spotify.com/show/3fRAypLrA1HJooqXhuJBgG"
   },
   
