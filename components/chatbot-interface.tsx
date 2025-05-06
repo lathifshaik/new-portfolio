@@ -157,11 +157,16 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
   const getFallbackResponse = (input: string) => {
     const q = input.toLowerCase()
 
+    // Handle potentially sensitive topics with humor and redirection
+    if (q.includes('kill') || q.includes('hurt') || q.includes('harm') || q.includes('violence')) {
+      return "Oh wow, that got dark fast! 😅 I'm just a friendly AI assistant here to talk about tech, projects, and occasionally share bad jokes. How about we discuss something more uplifting, like my latest project or favorite programming language?"
+    }
+
     if (q.includes("hello") || q.includes("hi")) {
       return "Hey there! I'm Lathif's digital twin. What would you like to know?"
     }
     if (q.includes("project") || q.includes("work")) {
-      return "I’ve worked on AI projects like Workzen, AI assistants, fitness trackers, and data tools."
+      return "I've worked on AI projects like Workzen, AI assistants, fitness trackers, and data tools."
     }
     if (q.includes("skill") || q.includes("technology")) {
       return "I specialize in Python, React, and LLMs — building full-stack and AI systems."
@@ -207,7 +212,17 @@ We search for answers evermore.
 हम हमेशा जवाब ढूँढ़ते हैं।`
     }
 
-    return "Interesting question! Want to know more about my projects, skills, or thoughts?"
+    // For other unexpected questions, respond with curiosity and redirection
+    if (q.includes('?') && (q.length > 20 || q.split(' ').length > 5)) {
+      const responses = [
+        "Hmm, that's an interesting thought! I'm more comfortable discussing tech, AI, or creative projects. What's your favorite technology to work with?",
+        "You've got me there! I'm better at talking about coding, AI, or my projects. Want to hear about what I've been working on?",
+        "*adjusts virtual glasses* That's quite the question! I'm more of a tech and AI enthusiast myself. Have you checked out any interesting tech trends lately?"
+      ]
+      return responses[Math.floor(Math.random() * responses.length)]
+    }
+
+    return "Interesting! Want to know more about my projects, skills, or thoughts? I can also share some terrible programming jokes if you're into that!"
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
