@@ -1,12 +1,10 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Send, X } from "lucide-react"
+import { useState, useRef, useEffect, useCallback, useMemo } from "react"
+import { Send, X, ChevronDown } from "lucide-react"
 import GlassCard from "@/components/glass-card"
 import { generateChatResponse } from "@/lib/mistral-client"
+import "@/app/chatbot.css"
 
 interface ChatbotInterfaceProps {
   onClose: () => void
@@ -21,119 +19,198 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi there! I'm Abdul's AI clone. How can I help you today?",
+      content: "Hey I'm Abdul Lathif but you can call me Lathif. How can I help you today?",
     },
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const [showScrollButton, setShowScrollButton] = useState(false)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
+  // Close on click outside
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  const handleSendMessage = async () => {
-    if (!input.trim()) return
-
-    const userMessage: Message = {
-      role: "user",
-      content: input,
+    const handleClickOutside = (event: MouseEvent) => {
+      if (chatContainerRef.current && !chatContainerRef.current.contains(event.target as Node)) {
+        onClose()
+      }
     }
 
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [onClose])
+
+  // Check if user has scrolled and determine which buttons to show
+  const handleScroll = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      // Show bottom button if not at bottom
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isAtBottom);
+    }
+  }, []);
+
+  // Scroll to bottom when messages change or when loading state changes
+  useEffect(() => {
+    const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior
+        });
+      }
+    };
+
+    // Auto-scroll to bottom on new messages
+    const timer = setTimeout(() => {
+      scrollToBottom('auto');
+    }, 100);
+
+    // Add scroll event listener
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [messages, isLoading, handleScroll]);
+
+  // Scroll handlers for the buttons
+  const scrollToBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  const truncateResponse = (text: string, wordLimit: number = 20) => {
+    if (!text) return '';
+    
+    // Split text into words
+    const words = text.split(/\s+/);
+    
+    // If within word limit, return as is
+    if (words.length <= wordLimit) return text;
+    
+    // Take first 20 words and add ellipsis
+    return words.slice(0, wordLimit).join(' ') + '...';
+  };
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading) return
+
+    const userMessage: Message = { role: "user", content: input }
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
 
     try {
-      // Format messages for Mistral AI
-      const messageHistory = messages
-        .filter((msg) => msg.role === "user" || msg.role === "assistant")
-        .map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        }));
+      const messageHistory = [...messages, userMessage]
+      const aiResponse = await generateChatResponse(messageHistory)
 
-      // Add the new user message
-      messageHistory.push({
-        role: "user",
-        content: input,
-      });
+      let responseContent = typeof aiResponse.content === "string"
+        ? aiResponse.content
+        : "Sorry, I couldn't generate a proper response.";
 
-      try {
-        // Try to generate a response using Mistral AI
-        const aiResponse = await generateChatResponse(messageHistory);
-        
-        // Ensure the response matches the Message type
-        const typedResponse: Message = {
-          role: "assistant",
-          content: typeof aiResponse.content === 'string' ? aiResponse.content : 'Sorry, I couldn\'t generate a proper response.'
-        };
+      // Limit response length
+      responseContent = truncateResponse(responseContent, 1000);
 
-        setMessages((prev) => [...prev, typedResponse]);
-      } catch (apiError) {
-        console.error("Mistral API error:", apiError);
-        
-        // Use the fallback response system when the API fails
-        const fallbackContent = getFallbackResponse(input);
-        
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: fallbackContent,
-          },
-        ]);
-        
-        // Log that we used a fallback response
-        console.log("Used fallback response due to API error");
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: responseContent,
       }
-      
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error processing message:", error);
+
+      setMessages((prev) => [...prev, assistantMessage])
+    } catch (err) {
+      console.error("API Error:", err)
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "Sorry, I'm having trouble right now. Feel free to ask me something else!",
+          content: getFallbackResponse(input),
         },
-      ]);
-      setIsLoading(false);
+      ])
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  // Fallback responses if Mistral AI is not available or errors out
   const getFallbackResponse = (input: string) => {
-    const lowerInput = input.toLowerCase()
+    const q = input.toLowerCase()
 
-    if (lowerInput.includes("hello") || lowerInput.includes("hi")) {
-      return "Hey there! Great to meet you. I'm Abdul's digital twin. What would you like to know about my work or experience?"
+    if (q.includes("hello") || q.includes("hi")) {
+      return "Hey there! I'm Lathif's digital twin. What would you like to know?"
+    }
+    if (q.includes("project") || q.includes("work")) {
+      return "I’ve worked on AI projects like Workzen, AI assistants, fitness trackers, and data tools."
+    }
+    if (q.includes("skill") || q.includes("technology")) {
+      return "I specialize in Python, React, and LLMs — building full-stack and AI systems."
+    }
+    if (q.includes("contact") || q.includes("hire")) {
+      return "Reach me at lathifshaik@icloud.com or on LinkedIn: https://www.linkedin.com/in/abdullathifsk/"
+    }
+    if (q.includes("poetry") || q.includes("poem")) {
+      return `**Stardust and Echoes**
+
+In the quiet of the night,
+Under the moon's soft glow,
+I find myself lost in thought,
+In the space between stars we know.
+
+Stars that whisper stories
+Of time and cosmic grace,
+Dreams that dance in moonlight,
+And echoes of a distant place.
+
+We're stardust, you and I,
+Bound by threads of cosmic lore,
+In this vast and endless sky,
+We search for answers evermore.
+
+---
+
+**तारे और ख्वाब**
+
+रात की खामोशी में,
+तारों की चमक में,
+मैं खोया हुआ हूँ,
+सवालों के सागर में.
+
+तारे दूर, चमकदार,
+समय और अंतरिक्ष की कहानियाँ बताते हैं,
+ख्वाब जो चाँदनी में धुंधलाते हैं,
+और दूर के स्थानों की आवाजें.
+
+हम तारों का धूल हैं,
+ब्रह्मांड की कहानियों से जुड़े,
+इस अनंत आकाश में,
+हम हमेशा जवाब ढूँढ़ते हैं।`
     }
 
-    if (lowerInput.includes("project") || lowerInput.includes("work")) {
-      return "I've worked on several exciting projects! My flagship project is Workzen, an AI recruitment platform. I've also built AI assistants, fitness tracking apps, and data analytics tools."
-    }
-
-    if (lowerInput.includes("skill") || lowerInput.includes("technology")) {
-      return "I specialize in Python, JavaScript, React, and various AI/ML technologies. I'm particularly experienced with LLMs, deep learning, and building full-stack applications."
-    }
-
-    if (lowerInput.includes("contact") || lowerInput.includes("hire")) {
-      return "You can reach me at lathifshaik@icloud.com or through my LinkedIn profile at linkedin.com/in/abdullathifsk. I'd love to discuss potential collaborations!"
-    }
-
-    if (lowerInput.includes("poetry") || lowerInput.includes("poem")) {
-      return "I write poetry in both English and Urdu/Hindi. My poems often explore themes of existence, relationships, and personal identity. I find poetry to be a beautiful way to express emotions that are hard to capture otherwise."
-    }
-
-    return "That's an interesting question! As Abdul's AI clone, I try to capture his approach to problem-solving and creativity. Is there something specific about my work or interests you'd like to know more about?"
+    return "Interesting question! Want to know more about my projects, skills, or thoughts?"
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
@@ -141,89 +218,144 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-      className="fixed bottom-0 right-0 md:right-8 md:bottom-8 z-50 w-full md:w-96 h-[500px] md:h-[600px] flex flex-col overflow-hidden"
-    >
-      <GlassCard className="h-full flex flex-col overflow-hidden">
+    <div 
+      ref={chatContainerRef}
+      className="fixed bottom-0 right-0 md:right-8 md:bottom-8 z-50 w-full md:w-96 h-[500px] md:h-[600px] shadow-2xl rounded-t-xl md:rounded-xl"
+      onClick={(e) => e.stopPropagation()}>
+      <GlassCard className="h-full flex flex-col relative overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white/50">
+        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white/70 backdrop-blur-sm">
           <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white font-semibold mr-3">
-              A
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white flex items-center justify-center font-semibold mr-3">
+              AL
             </div>
             <div>
-              <h3 className="font-semibold">Abdul's AI Clone</h3>
-              <p className="text-xs text-gray-500">Ask me anything</p>
+              <h3 className="font-semibold text-gray-800">Lathif's Digital Twin</h3>
+              <p className="text-xs text-gray-500">Ask me anything about me or my work</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 p-1 rounded-full hover:bg-gray-100">
+          <button 
+            onClick={onClose} 
+            className="text-gray-500 hover:text-gray-800 p-1 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Close chat">
             <X size={20} />
           </button>
         </div>
-
+        
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message, index) => (
-            <div key={index} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                  message.role === "user"
+        <div className="flex-1 overflow-hidden">
+          <div 
+            ref={messagesContainerRef}
+            className="h-full overflow-y-auto p-4 pb-84 space-y-4 scroll-container"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'thin',
+              scrollbarGutter: 'stable',
+              overscrollBehavior: 'contain',
+              touchAction: 'pan-y',
+              maxHeight: 'calc(100vh - 250px)'
+            }}
+            onTouchStart={(e: React.TouchEvent) => e.stopPropagation()}
+            onTouchMove={(e: React.TouchEvent) => {
+              e.stopPropagation();
+              const { scrollTop, scrollHeight, clientHeight } = e.currentTarget as HTMLDivElement;
+              if ((e.touches[0].clientY > 0 && scrollTop === 0) || 
+                  (e.touches[0].clientY < 0 && scrollHeight - scrollTop <= clientHeight + 1)) {
+                e.preventDefault();
+              }
+            }}
+            onWheel={(e: React.WheelEvent) => {
+              const element = e.currentTarget as HTMLDivElement;
+              const { scrollTop, scrollHeight, clientHeight } = element;
+              const isScrollingUp = e.deltaY < 0;
+              const isScrollingDown = e.deltaY > 0;
+              if ((isScrollingUp && scrollTop === 0) || 
+                  (isScrollingDown && scrollHeight - scrollTop <= clientHeight + 1)) {
+                e.stopPropagation();
+              }
+            }}>
+            <div ref={messagesEndRef} style={{ height: '1px' }} />
+            {/* Message bubbles */}
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} mb-6`}>
+                <div className={`max-w-[80%] px-4 py-3 rounded-2xl break-words ${
+                  msg.role === "user"
                     ? "bg-black text-white rounded-tr-none"
                     : "bg-gray-100 text-gray-800 rounded-tl-none"
-                }`}
-              >
-                {message.content}
-              </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-gray-100 text-gray-800 rounded-tl-none">
-                <div className="flex space-x-2">
-                  <div
-                    className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  ></div>
+                }`}>
+                  {msg.content}
                 </div>
               </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
+            ))}
+            
+            {/* Loading indicator */}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 text-gray-800 rounded-2xl rounded-tl-none px-4 py-3 max-w-[80%]">
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Extra space at the bottom for better scrolling */}
+            <div className="h-40"></div>
+          </div>
+          
+          {/* Scroll buttons */}
+          <div className="absolute right-4 bottom-20 flex flex-col gap-2">
+            <button
+              onClick={scrollToTop}
+              className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all z-50"
+              aria-label="Scroll to top">
+              <ChevronDown size={20} style={{ transform: 'rotate(180deg)' }} />
+            </button>
+            {showScrollButton && (
+              <button
+                onClick={scrollToBottom}
+                className="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all z-50"
+                aria-label="Scroll to bottom">
+                <ChevronDown size={20} />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Input */}
-        <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              className="flex-1 border border-gray-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none"
-              rows={1}
-            />
+        {/* Input area - fixed at bottom */}
+        <div className="p-4 border-t border-gray-100 bg-white/50 backdrop-blur-sm absolute bottom-0 left-0 right-0">
+          <div className="flex items-end gap-2">
+            <div className="flex-1 relative">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                className="w-full border border-gray-200 rounded-2xl px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white/80 shadow-sm"
+                rows={Math.min(4, input.split('\n').length)}
+                style={{ minHeight: '44px', maxHeight: '160px' }}
+              />
+            </div>
             <button
               onClick={handleSendMessage}
               disabled={!input.trim() || isLoading}
-              className="ml-2 bg-black hover:bg-gray-800 text-white rounded-full h-10 w-10 flex items-center justify-center transition-colors duration-300"
-            >
-              <Send size={18} />
+              className={`h-10 w-10 flex-shrink-0 rounded-full flex items-center justify-center transition-all ${
+                !input.trim() || isLoading
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg transform hover:scale-105'
+              }`}
+              aria-label="Send message">
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send size={18} />
+              )}
             </button>
           </div>
         </div>
       </GlassCard>
-    </motion.div>
+    </div>
   )
 }

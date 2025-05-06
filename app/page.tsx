@@ -94,19 +94,20 @@ export default function Home() {
       />
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className="text-2xl font-semibold"
           >
-            Abdul Lathif
+            <div className="text-xl sm:text-2xl font-semibold">
+              Abdul Lathif
+            </div>
           </motion.div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex space-x-6 lg:space-x-8">
             {sections.map((section) => (
               <motion.button
                 key={section.id}
@@ -177,7 +178,7 @@ export default function Home() {
       <motion.div
         ref={heroRef}
         id="hero"
-        className="min-h-screen pt-20 flex flex-col justify-center items-center text-center px-4 relative overflow-hidden"
+        className="min-h-screen pt-16 sm:pt-20 pb-12 flex flex-col justify-center items-center text-center px-4 sm:px-6 relative overflow-hidden"
         style={{ opacity, scale, y }}
       >
         <MagicGenieAnimation delay={0.2} duration={1.2}>
@@ -185,7 +186,7 @@ export default function Home() {
             <img
               src="/3CA15270-648C-4C60-A090-D707F95ACA09_1_201_a.jpeg"
               alt="Profile"
-              className="w-40 h-40 rounded-full mx-auto object-cover border-4 border-gray-100 shadow-lg"
+              className="w-32 h-32 sm:w-40 sm:h-40 rounded-full mx-auto object-cover border-4 border-gray-100 shadow-lg"
             />
           </ParallaxTilt>
         </MagicGenieAnimation>
@@ -194,7 +195,7 @@ export default function Home() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
-          className="text-5xl md:text-7xl font-bold mb-4 tracking-tight"
+          className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-3 sm:mb-4 tracking-tight leading-tight"
         >
           Abdul Lathif Shaik
         </motion.h1>
@@ -894,7 +895,7 @@ export default function Home() {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">LinkedIn</p>
-                        <a href="https://linkedin.com/in/lathifshaik" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-black">linkedin.com/in/lathifshaik</a>
+                        <a href="https://www.linkedin.com/in/abdullathifsk/" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-black">linkedin.com/in/abdullathifsk</a>
                       </div>
                     </div>
                     
