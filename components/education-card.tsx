@@ -68,7 +68,7 @@ export default function EducationCard() {
   const isInView = useInView(ref, { once: false, amount: 0.2 })
 
   return (
-    <div ref={ref} className="space-y-8">
+    <div ref={ref} className="space-y-6 md:space-y-8">
       {/* Education */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -76,15 +76,15 @@ export default function EducationCard() {
         transition={{ duration: 0.5 }}
         className="bg-white rounded-2xl shadow-lg overflow-hidden"
       >
-        <div className="bg-black text-white p-6">
+        <div className="bg-black text-white p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-4">
             <GraduationCap size={24} />
-            <h3 className="text-2xl font-semibold">Education</h3>
+            <h3 className="text-xl sm:text-2xl font-semibold">Education</h3>
           </div>
-          <h4 className="text-xl font-medium">{education.school}</h4>
-          <p className="text-gray-300 mt-1">{education.degree}</p>
+          <h4 className="text-lg sm:text-xl font-medium">{education.school}</h4>
+          <p className="text-gray-300 mt-1 text-sm sm:text-base">{education.degree}</p>
         </div>
-        <div className="p-6 flex justify-between items-center">
+        <div className="p-4 sm:p-6 flex justify-between items-center">
           <div className="flex items-center gap-2 text-gray-500">
             <Calendar size={16} />
             <span>Graduated</span>
@@ -100,14 +100,14 @@ export default function EducationCard() {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="bg-white rounded-2xl shadow-lg overflow-hidden"
       >
-        <div className="bg-black text-white p-6">
+        <div className="bg-black text-white p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-2">
             <Award size={24} />
-            <h3 className="text-2xl font-semibold">Certifications</h3>
+            <h3 className="text-xl sm:text-2xl font-semibold">Certifications</h3>
           </div>
         </div>
         <div className="p-6">
-          <div className="space-y-6">
+          <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
             {certifications.map((cert, index) => (
               <motion.div
                 key={index}
@@ -116,14 +116,11 @@ export default function EducationCard() {
                 transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
                 className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pb-4 border-b border-gray-100 last:border-0 last:pb-0"
               >
-                <div>
-                  <h4 className="font-medium">{cert.title}</h4>
-                  <p className="text-gray-500 text-sm">{cert.issuer}</p>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+                  <span className="font-medium text-sm sm:text-base">{cert.title}</span>
+                  <span className="text-xs sm:text-sm text-gray-500">{cert.date}</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-500 text-sm">
-                  <Calendar size={14} />
-                  <span>{cert.date}</span>
-                </div>
+                <p className="text-gray-600 text-xs sm:text-sm">{cert.issuer}</p>
               </motion.div>
             ))}
           </div>
@@ -137,7 +134,7 @@ export default function EducationCard() {
         transition={{ duration: 0.5, delay: 0.4 }}
         className="bg-white rounded-2xl shadow-lg overflow-hidden"
       >
-        <div className="bg-black text-white p-6">
+        <div className="bg-black text-white p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-2">
             <Award size={24} />
             <h3 className="text-2xl font-semibold">Achievements</h3>

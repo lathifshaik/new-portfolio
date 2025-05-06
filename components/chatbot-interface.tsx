@@ -49,19 +49,20 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
       const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
       // Show bottom button if not at bottom
       const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setShowScrollButton(!isAtBottom);
+      setShowScrollButton(prev => !isAtBottom);
     }
   }, []);
 
   // Scroll to bottom when messages change or when loading state changes
   useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
     const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTo({
-          top: messagesContainerRef.current.scrollHeight,
-          behavior
-        });
-      }
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior
+      });
     };
 
     // Auto-scroll to bottom on new messages
@@ -70,18 +71,20 @@ export default function ChatbotInterface({ onClose }: ChatbotInterfaceProps) {
     }, 100);
 
     // Add scroll event listener
-    const container = messagesContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-    }
+    const scrollHandler = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(prev => !isAtBottom);
+    };
+
+    container.addEventListener('scroll', scrollHandler);
+    scrollHandler(); // Initial check
 
     return () => {
       clearTimeout(timer);
-      if (container) {
-        container.removeEventListener('scroll', handleScroll);
-      }
+      container.removeEventListener('scroll', scrollHandler);
     };
-  }, [messages, isLoading, handleScroll]);
+  }, [messages, isLoading]);
 
   // Scroll handlers for the buttons
   const scrollToBottom = useCallback(() => {

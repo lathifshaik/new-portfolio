@@ -82,16 +82,18 @@ export default function Home() {
       {/* Floating Tech Elements */}
       <FloatingTechElements />
 
-      {/* Apple-inspired Spheres */}
-      <AppleSphere size={200} position={{ top: "10%", left: "5%" }} color="rgba(0, 0, 0, 0.03)" blur={50} />
-      <AppleSphere size={300} position={{ top: "40%", right: "5%" }} color="rgba(0, 0, 0, 0.02)" delay={2} blur={70} />
-      <AppleSphere
-        size={250}
-        position={{ bottom: "20%", left: "10%" }}
-        color="rgba(0, 0, 0, 0.03)"
-        delay={1}
-        blur={60}
-      />
+      {/* Apple-inspired Spheres - hide on small screens */}
+      <div className="hidden sm:block">
+        <AppleSphere size={200} position={{ top: "10%", left: "5%" }} color="rgba(0, 0, 0, 0.03)" blur={50} />
+        <AppleSphere size={300} position={{ top: "40%", right: "5%" }} color="rgba(0, 0, 0, 0.02)" delay={2} blur={70} />
+        <AppleSphere
+          size={250}
+          position={{ bottom: "20%", left: "10%" }}
+          color="rgba(0, 0, 0, 0.03)"
+          delay={1}
+          blur={60}
+        />
+      </div>
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
@@ -101,7 +103,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="text-xl sm:text-2xl font-semibold">
+            <div className="text-lg sm:text-xl md:text-2xl font-semibold">
               Abdul Lathif
             </div>
           </motion.div>
@@ -146,9 +148,9 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-16 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 md:hidden"
+            className="fixed top-16 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-lg md:hidden"
           >
-            <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
+            <div className="container mx-auto px-4 py-6 flex flex-col space-y-5">
               {sections.map((section) => (
                 <button
                   key={section.id}

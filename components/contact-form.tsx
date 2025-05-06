@@ -177,7 +177,13 @@ export default function ContactForm() {
   }
 
   return (
-    <div ref={ref} className="relative">
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="relative z-10 bg-white/60 backdrop-blur-lg rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 max-w-2xl mx-auto w-full"
+    >
       <motion.div
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : { opacity: 0 }}
@@ -194,7 +200,7 @@ export default function ContactForm() {
 
       <motion.form
         onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 relative overflow-hidden mx-4 sm:mx-6 md:mx-auto max-w-2xl w-full"
+        className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 relative overflow-hidden mx-auto max-w-2xl w-full"
         initial={{ opacity: 0, y: 50 }}
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
         transition={{ duration: 0.5 }}
@@ -226,7 +232,7 @@ export default function ContactForm() {
               {formError}
             </div>
           )}
-          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <motion.div custom={0} variants={inputVariants} initial="hidden" animate={isInView ? "visible" : "hidden"}>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                 Name
@@ -241,7 +247,7 @@ export default function ContactForm() {
                 required
               />
             </motion.div>
-            <motion.div custom={1} variants={inputVariants} initial="hidden" animate={isInView ? "visible" : "hidden"}>
+            <motion.div className="flex justify-center md:justify-end" custom={1} variants={inputVariants} initial="hidden" animate={isInView ? "visible" : "hidden"}>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
@@ -275,13 +281,12 @@ export default function ContactForm() {
             </label>
             <textarea
               id="message"
-              rows={5}
-              className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200 resize-none text-sm sm:text-base"
+              className="w-full px-4 py-3 bg-gray-50 rounded-lg border border-gray-200 focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200 min-h-[120px] sm:min-h-[150px] resize-none text-sm sm:text-base"
               placeholder="Your Message"
               value={formData.message}
               onChange={handleChange}
               required
-            ></textarea>
+            />
           </motion.div>
           <motion.div custom={4} variants={inputVariants} initial="hidden" animate={isInView ? "visible" : "hidden"}>
             <Button
@@ -303,6 +308,6 @@ export default function ContactForm() {
           </motion.div>
         </div>
       </motion.form>
-    </div>
+    </motion.div>
   )
 }

@@ -54,13 +54,13 @@ export default function ProjectShowcase() {
   const isInView = useInView(ref, { once: false, amount: 0.3 })
 
   return (
-    <div className="grid md:grid-cols-2 gap-12 items-center" ref={ref}>
+    <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center" ref={ref}>
       <div className="order-2 md:order-1">
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {projects.map((project, index) => (
             <motion.div
               key={project.id}
-              className={`p-6 rounded-2xl cursor-pointer transition-all duration-300 ${
+              className={`p-4 sm:p-6 rounded-2xl cursor-pointer transition-all duration-300 ${
                 activeProject === project.id ? "bg-white shadow-xl" : "bg-[#f5f5f7] hover:bg-white hover:shadow-md"
               }`}
               onClick={() => setActiveProject(project.id)}
@@ -74,11 +74,11 @@ export default function ProjectShowcase() {
                 stiffness: 100,
               }}
             >
-              <h3 className={`text-xl font-semibold mb-2`}>{project.title}</h3>
-              <p className={`text-gray-600 mb-4`}>{project.description}</p>
-              <div className="flex flex-wrap gap-2">
+              <h3 className={`text-lg sm:text-xl font-semibold mb-1 sm:mb-2`}>{project.title}</h3>
+              <p className={`text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base`}>{project.description}</p>
+              <div className="flex flex-wrap gap-1 sm:gap-2">
                 {project.technologies.map((tech, index) => (
-                  <span key={index} className="px-3 py-1 bg-[#f5f5f7] rounded-full text-gray-700 text-xs">
+                  <span key={index} className="px-2 sm:px-3 py-1 bg-[#f5f5f7] rounded-full text-gray-700 text-[10px] sm:text-xs">
                     {tech}
                   </span>
                 ))}
@@ -95,11 +95,11 @@ export default function ProjectShowcase() {
         </div>
       </div>
 
-      <div className="order-1 md:order-2">
+      <div className="order-1 md:order-2 mx-auto w-full max-w-md md:max-w-none">
         {projects.map((project) => (
           <motion.div
             key={project.id}
-            className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl"
+            className="relative aspect-[4/3] rounded-2xl md:rounded-3xl overflow-hidden shadow-xl md:shadow-2xl"
             initial={{ opacity: 0, rotateY: 90 }}
             animate={{
               opacity: activeProject === project.id ? 1 : 0,
@@ -119,13 +119,13 @@ export default function ProjectShowcase() {
           >
             <Image src={project.image || "/placeholder.svg"} alt={project.title} fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent flex items-end">
-              <div className="p-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">{project.title}</h3>
-                <div className="flex flex-wrap gap-2">
+              <div className="p-3 sm:p-6 text-white">
+                <h3 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">{project.title}</h3>
+                <div className="flex flex-wrap gap-1 sm:gap-2">
                   {project.technologies.slice(0, 3).map((tech, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs"
+                      className="px-2 sm:px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-[10px] sm:text-xs"
                     >
                       {tech}
                     </span>
